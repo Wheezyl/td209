@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prévisions Météo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Prévisions Météo</h1>
+
+        <section class="form-section" aria-labelledby="basic-form-title">
+            <h2 id="basic-form-title">Recherche Météo Simple</h2>
+            <div class="form-group">
+                <label for="zipcode">Code Postal</label>
+                <input type="text" id="zipcode" placeholder="Ex: 14000" maxlength="5" required aria-describedby="zipcode-help">
+            </div>
+            <div class="form-group">
+                <label for="city">Commune</label>
+                <select id="city" required aria-describedby="city-help">
+                    <option value="">Sélectionnez une commune</option>
+                </select>
+            </div>
+            <button onclick="fetchBasicWeather()">Afficher la météo</button>
+        </section>
+        <section id="results" aria-live="polite">
+            <div id="error" class="error"></div>
+            <div id="weather-results" class="weather-cards"></div>
+        </section>
+    </div>
+</body>
+</html>
