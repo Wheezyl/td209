@@ -1,33 +1,34 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prévisions Météo</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Instant Weather</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-    <div class="container">
-        <h1>Prévisions Météo</h1>
+  <main>
+    <h1>🌦️ Instant Weather</h1>
+    <form id="weather-form" aria-labelledby="weather-form">
+      <div class="form-group">
+        <label for="postal-code">Code postal :</label>
+        <input type="text" id="postal-code" name="postal-code" required pattern="\d{5}" placeholder="75000" aria-describedby="postal-code-helper"/>
+        <small id="postal-code-helper">Veuillez entrer un code postal à 5 chiffres (ex. : 75000).</small>
+      </div>
 
-        <section class="form-section" aria-labelledby="basic-form-title">
-            <h2 id="basic-form-title">Recherche Météo Simple</h2>
-            <div class="form-group">
-                <label for="zipcode">Code Postal</label>
-                <input type="text" id="zipcode" placeholder="Ex: 14000" maxlength="5" required aria-describedby="zipcode-help">
-            </div>
-            <div class="form-group">
-                <label for="city">Commune</label>
-                <select id="city" required aria-describedby="city-help">
-                    <option value="">Sélectionnez une commune</option>
-                </select>
-            </div>
-            <button onclick="fetchBasicWeather()">Afficher la météo</button>
-        </section>
-        <section id="results" aria-live="polite">
-            <div id="error" class="error"></div>
-            <div id="weather-results" class="weather-cards"></div>
-        </section>
-    </div>
+      <div class="form-group">
+        <label for="commune-select">Commune :</label>
+        <select id="commune-select" name="commune" required aria-labelledby="commune-select">
+          <option value="">Veuillez entrer un code postal d'abord</option>
+        </select>
+      </div>
+
+      <button type="submit">🔍 Rechercher</button>
+    </form>
+
+    <section id="results" aria-live="polite"></section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
