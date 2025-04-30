@@ -1,153 +1,73 @@
-const METEO_API_KEY = '';
-const GEO_API_URL = 'https://geo.api.gouv.fr/communes';
-const METEO_API_URL = 'https://api.meteo-concept.com/api/forecast/daily';
+const geoAPI = "https://geo.api.gouv.fr/communes?codePostal=";
+const weatherAPI = "https://api.meteo-concept.com/api/forecast/daily";
+const token = "74bc07e4d8ee43ad4e23dc671385dc4d9675b7748c8f72a32d6d124715275abc";
 
-async function fetchCities(zipcode, citySelectId) {
+// Chargement des communes en fonction du code postal
+document.getElementById("postal-code").addEventListener("input", async function () {
+  const code = this.value.trim();
+  const communeSelect = document.getElementById("commune-select");
+  communeSelect.innerHTML = "";
+
+  if (/^\d{5}$/.test(code)) {
     try {
-        const response = await fetch(`${GEO_API_URL}?codePostal=${zipcode}`);
-        if (!response.ok) throw new Error('Code postal invalide');
-        const cities = await response.json();
-        const citySelect = document.getElementById(citySelectId);
-        citySelect.innerHTML = '<option value="">Sélectionnez une commune</option>';
-        
-        cities.forEach(city => {
-            const option = document.createElement('option');
-            option.value = JSON.stringify({
-                name: city.nom,
-                insee: city.code,
-                lat: city.centre.coordinates[1],
-                lon: city.centre.coordinates[0]
-            });
-            option.textContent = city.nom;
-            citySelect.appendChild(option);
-        });
-    } catch (error) {
-        displayError(error.message);
-    }
-}
+      const res = await fetch(`${geoAPI}${code}&fields=nom,code&format=json`);
+      const data = await res.json();
 
-function displayError(message) {
-    const errorDiv = document.getElementById('error');
-    errorDiv.textContent = message;
-    setTimeout(() => errorDiv.textContent = '', 5000);
-}
-
-async function fetchBasicWeather() {
-    const zipcode = document.getElementById('zipcode').value;
-    const citySelect = document.getElementById('city');
-    const cityData = citySelect.value ? JSON.parse(citySelect.value) : null;
-
-    if (!zipcode || !cityData) {
-        displayError('Veuillez remplir tous les champs');
+      if (!Array.isArray(data) || data.length === 0) {
+        communeSelect.innerHTML = "<option>Aucune commune trouvée</option>";
         return;
-    }
+      }
 
-    try {
-        const response = await fetch(`${METEO_API_URL}?token=${METEO_API_KEY}&insee=${cityData.insee}`);
-        if (!response.ok) throw new Error('Erreur lors de la récupération des données météo');
-        const data = await response.json();
-        const forecast = data.forecast[0];
-
-        const weatherData = {
-            city: cityData.name,
-            tempMin: forecast.tmin,
-            tempMax: forecast.tmax,
-            rainProb: forecast.rr10,
-            sunHours: forecast.sun_hours,
-            weather: forecast.weather
-        };
-
-        displayWeather([weatherData]);
+      communeSelect.innerHTML = "<option value=''>-- Choisissez une commune --</option>";
+      data.forEach(commune => {
+        const opt = document.createElement("option");
+        opt.value = commune.code; // Code INSEE
+        opt.textContent = commune.nom;
+        communeSelect.appendChild(opt);
+      });
     } catch (error) {
-        displayError(error.message);
+      console.error("Erreur API Geo:", error);
+      communeSelect.innerHTML = "<option>Erreur de chargement</option>";
     }
-}
-
-async function fetchAdvancedWeather() {
-    const zipcode = document.getElementById('adv-zipcode').value;
-    const citySelect = document.getElementById('adv-city');
-    const days = parseInt(document.getElementById('days').value);
-    const cityData = citySelect.value ? JSON.parse(citySelect.value) : null;
-
-    if (!zipcode || !cityData || isNaN(days)) {
-        displayError('Veuillez remplir tous les champs correctement');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${METEO_API_URL}/${days}?token=${METEO_API_KEY}&insee=${cityData.insee}`);
-        if (!response.ok) throw new Error('Erreur lors de la récupération des données météo');
-        const data = await response.json();
-        const forecasts = data.forecast;
-
-        const showLatitude = document.getElementById('latitude').checked;
-        const showLongitude = document.getElementById('longitude').checked;
-        const showRain = document.getElementById('rain').checked;
-        const showWindSpeed = document.getElementById('wind-speed').checked;
-        const showWindDirection = document.getElementById('wind-direction').checked;
-
-        const weatherDataArray = forecasts.map((forecast, index) => ({
-            city: cityData.name,
-            day: `Jour ${index + 1}`,
-            tempMin: forecast.tmin,
-            tempMax: forecast.tmax,
-            rainProb: forecast.rr10,
-            sunHours: forecast.sun_hours,
-            weather: forecast.weather,
-            latitude: showLatitude ? cityData.lat : null,
-            longitude: showLongitude ? cityData.lon : null,
-            rain: showRain ? forecast.rr1 : null,
-            windSpeed: showWindSpeed ? forecast.wind10m : null,
-            windDirection: showWindDirection ? forecast.dirwind10m : null
-        }));
-
-        displayWeather(weatherDataArray);
-    } catch (error) {
-        displayError(error.message);
-    }
-}
-
-function displayWeather(weatherDataArray) {
-    const resultsDiv = document.getElementById('weather-results');
-    resultsDiv.innerHTML = '';
-
-    weatherDataArray.forEach(data => {
-        const card = document.createElement('div');
-        card.className = 'weather-card';
-        card.setAttribute('role', 'region');
-        card.setAttribute('aria-label', `Prévisions météo pour ${data.city}`);
-
-        const weatherIcon = document.createElement('img');
-        weatherIcon.src = `https://api.meteo-concept.com/static/icons/flat/${data.weather}.svg`;
-        weatherIcon.alt = `Icône météo pour ${data.city}`;
-        
-        const content = `
-            <h3>${data.city}${data.day ? ' - ' + data.day : ''}</h3>
-            <p>Temp. min: ${data.tempMin}°C</p>
-            <p>Temp. max: ${data.tempMax}°C</p>
-            <p>Probabilité de pluie: ${data.rainProb}%</p>
-            <p>Ensoleillement: ${data.sunHours}h</p>
-            ${data.latitude !== null ? `<p>Latitude: ${data.latitude}</p>` : ''}
-            ${data.longitude !== null ? `<p>Longitude: ${data.longitude}</p>` : ''}
-            ${data.rain !== null ? `<p>Pluie: ${data.rain}mm</p>` : ''}
-            ${data.windSpeed !== null ? `<p>Vent: ${data.windSpeed}km/h</p>` : ''}
-            ${data.windDirection !== null ? `<p>Direction vent: ${data.windDirection}°</p>` : ''}
-        `;
-
-        card.appendChild(weatherIcon);
-        card.innerHTML += content;
-        resultsDiv.appendChild(card);
-    });
-}
-
-document.getElementById('zipcode').addEventListener('input', (e) => {
-    if (e.target.value.length === 5) {
-        fetchCities(e.target.value, 'city');
-    }
+  } else {
+    communeSelect.innerHTML = "<option>Veuillez entrer un code postal valide</option>";
+  }
 });
 
-document.getElementById('adv-zipcode').addEventListener('input', (e) => {
-    if (e.target.value.length === 5) {
-        fetchCities(e.target.value, 'adv-city');
-    }
+// Envoi du formulaire météo
+document.getElementById("weather-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const insee = document.getElementById("commune-select").value;
+  const results = document.getElementById("results");
+  results.innerHTML = "";
+
+  if (!insee) {
+    alert("Veuillez sélectionner une commune.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${weatherAPI}?token=${token}&insee=${insee}`);
+    const forecast = await res.json();
+
+    const todayForecast = forecast.forecast[0]; // Météo du jour (modifiable selon tes besoins)
+
+    const card = document.createElement("div");
+    card.className = "weather-card";
+
+    const html = `
+      <h3>${forecast.city.name} - Météo du jour</h3>
+      <p>Temp. min : ${todayForecast.tmin} °C</p>
+      <p>Temp. max : ${todayForecast.tmax} °C</p>
+      <p>Probabilité de pluie : ${todayForecast.probarain}%</p>
+      <p>Ensoleillement : ${todayForecast.sun_hours} h</p>
+    `;
+
+    card.innerHTML = html;
+    results.appendChild(card);
+  } catch (error) {
+    console.error("Erreur API MétéoConcept:", error);
+    results.innerHTML = "<p>Erreur de récupération des données météo.</p>";
+  }
 });
+ 
